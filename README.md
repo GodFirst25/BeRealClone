@@ -30,14 +30,14 @@ The following **additional** features are implemented:
 - [ ] List anything else that you can get done to improve the app functionality!
 
 ## Video Walkthrough
-
+https://www.loom.com/share/5ca2ed319d5e40278cd06dc8ba73c542
  
 
 
 
 ## Notes
 
-Describe any challenges encountered while building the app.
+Building the BeRealClone app presented several key challenges including Parse/Back4App integration issues with file upload restrictions (solved through image compression and proper naming), iOS 15.6 compatibility limitations that prevented using modern SwiftUI TextField features, UIImagePickerController dismiss logic problems where the "Choose" button initially failed to work, implementing a two-step upload process for data integrity, managing authentication state across app launches, ensuring proper feed refresh after post creation, and debugging Parse response decoding errors where imageFile was stored incorrectly. These challenges required implementing proper error handling, console logging, and workarounds for platform limitations while maintaining a smooth user experience.
 
 ## License
 
