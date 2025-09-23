@@ -13,7 +13,8 @@ struct BeRealCloneApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
         }
     }
 }
+
