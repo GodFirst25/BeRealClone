@@ -4,18 +4,18 @@ Submitted by: **Olamide Oduntan**
 
 **BeRealClone** is an app that ... [TODO] 
 
-Time spent: **X** hours spent in total
+Time spent: **8** hours spent in total
 
 ## Required Features
 
 The following **required** functionality is completed:
 
-- [ ] Users see an app icon in the home screen and a styled launch screen.
-- [ ] User can register a new account
-- [ ] User can log in with newly created account
-- [ ] App has a feed of posts when user logs in
-- [ ] User can upload a new post which takes in a picture from photo library and an optional caption	
-- [ ] User is able to logout	
+- [✅] Users see an app icon in the home screen and a styled launch screen.
+- [✅] User can register a new account
+- [✅] User can log in with newly created account
+- [✅] App has a feed of posts when user logs in
+- [✅] User can upload a new post which takes in a picture from photo library and an optional caption	
+- [✅] User is able to logout	
  
 The following **optional** features are implemented:
 
@@ -31,9 +31,9 @@ The following **additional** features are implemented:
 
 ## Video Walkthrough
 
-Here is a reminder on how to embed Loom videos on GitHub. Feel free to remove this reminder once you upload your README. 
+ 
 
-[Guide](https://www.youtube.com/watch?v=GA92eKlYio4).
+
 
 ## Notes
 
