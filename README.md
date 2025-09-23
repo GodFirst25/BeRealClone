@@ -1,8 +1,8 @@
 # Project 2 - *BeRealClone*
 
-Submitted by: **Your Name Here**
+Submitted by: **Olamide Oduntan**
 
-**Name of your app** is an app that ... [TODO] 
+**BeRealClone** is an app that ... [TODO] 
 
 Time spent: **X** hours spent in total
 
