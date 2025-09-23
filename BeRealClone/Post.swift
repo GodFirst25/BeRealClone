@@ -20,5 +20,11 @@ struct Post: ParseObject {
     var imageFile: ParseFile?
     var user: AppUser?
     
-    init() { }
+    init() { 
+        self.originalData = nil
+    }
+}
+
+extension Post: Identifiable {
+    var id: String? { objectId }
 }

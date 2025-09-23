@@ -5,7 +5,6 @@
 //  Created by student on 9/23/25.
 //
 
-import Foundation
 import SwiftUI
 import ParseSwift
 
@@ -105,14 +104,18 @@ struct CreatePostView: View {
         
         isUploading = true
         
-        // Convert UIImage to Data
-        guard let imageData = selectedImage.jpegData(compressionQuality: 0.8) else {
+        // Resize image to reduce file size
+        let resizedImage = resizeImage(image: selectedImage, targetSize: CGSize(width: 800, height: 800))
+        
+        // Convert UIImage to Data with lower compression
+        guard let imageData = resizedImage.jpegData(compressionQuality: 0.3) else {
             showError("Failed to process image")
             return
         }
         
-        // Create Parse file from image data
-        let parseFile = ParseFile(name: "post_image_\(Date().timeIntervalSince1970).jpg", data: imageData)
+        // Create Parse file with simple name
+        let fileName = UUID().uuidString + ".jpg"
+        let parseFile = ParseFile(name: fileName, data: imageData)
         
         // First upload the image file
         parseFile.save { result in
@@ -125,6 +128,24 @@ struct CreatePostView: View {
                 }
             }
         }
+    }
+    
+    // Helper function to resize image
+    private func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
+        let size = image.size
+        let widthRatio = targetSize.width / size.width
+        let heightRatio = targetSize.height / size.height
+        let ratio = min(widthRatio, heightRatio)
+        
+        let newSize = CGSize(width: size.width * ratio, height: size.height * ratio)
+        let rect = CGRect(origin: .zero, size: newSize)
+        
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: rect)
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return newImage ?? image
     }
     
     private func savePost(with imageFile: ParseFile) {
@@ -188,7 +209,7 @@ struct ImagePickerController: UIViewControllerRepresentable {
     @Environment(\.dismiss) var dismiss
 
     func makeCoordinator() -> Coordinator {
-        return Coordinator(selectedImage: $selectedImage, dismiss: dismiss)
+        return Coordinator(selectedImage: $selectedImage)
     }
     
     func makeUIViewController(context: Context) -> UIImagePickerController {
@@ -203,25 +224,25 @@ struct ImagePickerController: UIViewControllerRepresentable {
     
     class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
         @Binding var selectedImage: UIImage?
-        let dismiss: DismissAction
         
-        init(selectedImage: Binding<UIImage?>, dismiss: DismissAction) {
+        init(selectedImage: Binding<UIImage?>) {
             _selectedImage = selectedImage
-            self.dismiss = dismiss
         }
         
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            // Use edited image if available, otherwise use original
             if let editedImage = info[.editedImage] as? UIImage {
                 selectedImage = editedImage
             } else if let originalImage = info[.originalImage] as? UIImage {
                 selectedImage = originalImage
             }
-            dismiss()
+            
+            // Dismiss the picker
+            picker.dismiss(animated: true, completion: nil)
         }
         
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            dismiss()
+            picker.dismiss(animated: true, completion: nil)
         }
     }
 }
-
