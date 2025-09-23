@@ -2,7 +2,7 @@
 
 Submitted by: **Olamide Oduntan**
 
-**BeRealClone** is an app that ... [TODO] 
+**BeRealClone** is an app that ets users share authentic moments through photos and captions. Featuring user authentication, photo upload from device library, and a social feed displaying posts with user info and timestamps. Built with SwiftUI and Parse backend for secure data storage and real-time content sharing.
 
 Time spent: **8** hours spent in total
 
