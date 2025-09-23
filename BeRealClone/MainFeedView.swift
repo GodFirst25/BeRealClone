@@ -74,7 +74,7 @@ struct MainFeedView: View {
                     FeedView(posts: $posts)
                 }
             }
-            .navigationBarHidden(true)
+            .navigationBarHidden(false)
             .onAppear {
                 fetchPosts()
             }
