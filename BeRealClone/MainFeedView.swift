@@ -6,12 +6,14 @@
 //
 
 import SwiftUI
+import ParseSwift
 
 struct MainFeedView: View {
     @AppStorage("isLoggedIn") private var isLoggedIn = false
     @State private var posts: [Post] = []
     @State private var showingCreatePost = false
     @State private var isLoading = false
+    @State private var currentUser: AppUser?
     
     var body: some View {
         NavigationView {
@@ -23,8 +25,8 @@ struct MainFeedView: View {
                             .font(.title2)
                             .bold()
                         
-                        if let currentUser = AppUser.current {
-                            Text("Welcome, \(currentUser.username ?? "User")!")
+                        if let user = currentUser {
+                            Text("Welcome, \(user.username ?? "User")!")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
@@ -52,15 +54,17 @@ struct MainFeedView: View {
                             .font(.system(size: 60))
                             .foregroundColor(.gray)
                         
-                        Text("No posts yet")
+                        Text(currentUser?.lastPostDate == nil ? "No posts yet" : "No visible posts")
                             .font(.title2)
                             .foregroundColor(.gray)
                         
-                        Text("Be the first to share a moment!")
+                        Text(currentUser?.lastPostDate == nil ? "Post a photo to see others' post!" : "Be the first to share a moment!")
                             .font(.body)
                             .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
                         
-                        Button("Create First Post") {
+                        Button("Create Post") {
                             showingCreatePost = true
                         }
                         .padding()
@@ -71,12 +75,14 @@ struct MainFeedView: View {
                     Spacer()
                 } else {
                     // Posts feed
-                    FeedView(posts: $posts)
+                    FeedView(posts: $posts, currentUser: currentUser)
                 }
             }
             .navigationBarHidden(false)
             .onAppear {
+                loadCurrentUser()
                 fetchPosts()
+                NotificationManager.shared.requestPermission()
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -91,10 +97,16 @@ struct MainFeedView: View {
             }
             .sheet(isPresented: $showingCreatePost) {
                 CreatePostView(onPostCreated: {
-                    fetchPosts() // Refresh feed after new post
+                    fetchPosts()
+                    loadCurrentUser()// Refresh user to get updated after new post
                 })
             }
         }
+    }
+    
+    // Load current user
+    func loadCurrentUser() {
+        currentUser = AppUser.current
     }
     
     // Fetch posts from Back4App
@@ -104,7 +116,7 @@ struct MainFeedView: View {
         let query = Post.query()
             .include("user")
             .order([.descending("createdAt")]) // Show newest posts first
-            .limit(20) // Limit to 20 most recent posts
+            .limit(10) // Limit to 10 most recent posts as required
         
         query.find { result in
             DispatchQueue.main.async {
@@ -112,8 +124,8 @@ struct MainFeedView: View {
                 
                 switch result {
                 case .success(let fetchedPosts):
-                    self.posts = fetchedPosts
-                    print("✅ Fetched \(fetchedPosts.count) posts")
+                    self.posts = filterVisiblePosts(fetchedPosts)
+                    print("✅ Fetched \(fetchedPosts.count) posts, showing \(self.posts.count)")
                 case .failure(let error):
                     print("❌ Error fetching posts: \(error.localizedDescription)")
                 }
@@ -121,7 +133,38 @@ struct MainFeedView: View {
         }
     }
     
+    private func filterVisiblePosts(_ posts: [Post]) -> [Post] {
+        guard let currentUser = currentUser else {
+            return []
+        }
+        
+        // If user hasn't posted yet, don't show any posts
+        guard let userLastPost = currentUser.lastPostDate else {
+            return []
+        }
+        
+        let calendar = Calendar.current
+        let now = Date()
+        
+        return posts.filter { post in
+            // Always show current user's posts
+            if post.user?.objectId == currentUser.objectId {
+                return true
+            }
+            
+            guard let postDate = post.createdAt else { return false }
+            
+            let hoursSincePost = calendar.dateComponents([.hour], from: postDate, to: now).hour ?? 0
+            let hoursSinceUserPost = calendar.dateComponents([.hour], from: userLastPost, to: now).hour ?? 0
+            
+            return hoursSincePost <= 24 && hoursSinceUserPost <= 24
+        }
+    }
+    
     private func logout() {
+        // Remove pending notification before logout
+        NotificationManager.shared.cancelAllNotifications()
+        
         AppUser.logout { result in
             DispatchQueue.main.async {
                 switch result {
@@ -138,12 +181,16 @@ struct MainFeedView: View {
 
 struct FeedView: View {
     @Binding var posts: [Post]
+    let currentUser: AppUser?
 
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 ForEach(posts, id: \.objectId) { post in
-                    PostCell(post: post)
+                    NavigationLink(destination: CommentsView(post: post)) {
+                        PostCell(post: post, currentUser: currentUser)
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
             .padding()
@@ -153,6 +200,24 @@ struct FeedView: View {
 
 struct PostCell: View {
     let post: Post
+    let currentUser: AppUser?
+    
+    // PART 2: Determine if post should be blurred
+    private var shouldBlur: Bool {
+        guard let currentUser = currentUser, post.user?.objectId != currentUser.objectId else {
+            return false
+        }
+        
+        guard let userLastPost = currentUser.lastPostDate else {
+            return true
+        }
+        
+        let calendar = Calendar.current
+        let now = Date()
+        let hoursSinceUserPost = calendar.dateComponents([.hour], from: userLastPost, to: now).hour ?? 0
+        
+        return hoursSinceUserPost > 24
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -173,6 +238,7 @@ struct PostCell: View {
                         .font(.headline)
                         .foregroundColor(.primary)
                     
+                    // PART 2: Show time ago
                     if let createdAt = post.createdAt {
                         Text(timeAgoString(from: createdAt))
                             .font(.caption)
@@ -183,6 +249,18 @@ struct PostCell: View {
                 Spacer()
             }
             
+            // PART 2: Location display
+            if let location = post.location {
+                HStack {
+                    Image(systemName: "location.fill")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(location)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            
             // Post image
             if let imageFile = post.imageFile, let imageURL = imageFile.url {
                 AsyncImage(url: imageURL) { phase in
@@ -191,9 +269,7 @@ struct PostCell: View {
                         Rectangle()
                             .fill(Color.gray.opacity(0.2))
                             .frame(height: 300)
-                            .overlay(
-                                ProgressView()
-                            )
+                            .overlay(ProgressView())
                     case .success(let image):
                         image
                             .resizable()
@@ -201,6 +277,23 @@ struct PostCell: View {
                             .frame(maxHeight: 400)
                             .clipped()
                             .cornerRadius(12)
+                            .overlay (
+                                // PART 2: Blur overlay
+                                shouldBlur ?
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(.ultraThinMaterial)
+                                    .overlay(
+                                        VStack {
+                                            Image(systemName: "lock.fill")
+                                                .font(.largeTitle)
+                                                .foregroundColor(.white)
+                                            Text("Post to see this")
+                                                .font(.caption)
+                                                .foregroundColor(.white)
+                                        }
+                                    )
+                                : nil
+                            )
                     case .failure(_):
                         Rectangle()
                             .fill(Color.gray.opacity(0.2))
@@ -228,6 +321,15 @@ struct PostCell: View {
                     .font(.body)
                     .foregroundColor(.primary)
             }
+            
+            // Comment indicator
+            HStack {
+                Image(systemName: "bubble.right")
+                    .font(.caption)
+                Text("View comments")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
         .padding()
         .background(Color(.systemBackground))
@@ -237,9 +339,17 @@ struct PostCell: View {
     
     // Helper function to format time ago
     private func timeAgoString(from date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: date, relativeTo: Date())
+        let calendar = Calendar.current
+        let now = Date()
+        let components = calendar.dateComponents([.hour], from: date, to: now)
+        
+        if let hours = components.hour, hours > 0 {
+            return "\(hours)h ago"
+        } else if let minutes = components.minute, minutes > 0 {
+            return "\(minutes)m ago"
+        } else {
+            return "Just now"
+        }
     }
 }
 

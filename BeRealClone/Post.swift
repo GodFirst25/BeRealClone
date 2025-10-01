@@ -8,22 +8,22 @@
 import Foundation
 import ParseSwift
 
-struct Post: ParseObject {
-    var originalData: Data?
+//struct Post: ParseObject {
+//    var originalData: Data?
     
-    var objectId: String?
-    var createdAt: Date?
-    var updatedAt: Date?
-    var ACL: ParseACL?
+//    var objectId: String?
+//    var createdAt: Date?
+//    var updatedAt: Date?
+//    var ACL: ParseACL?
     
-    var caption: String?
-    var imageFile: ParseFile?
-    var user: AppUser?
+//    var caption: String?
+//    var imageFile: ParseFile?
+//    var user: AppUser?
     
-    init() { 
-        self.originalData = nil
-    }
-}
+//    init() {
+ //       self.originalData = nil
+//    }
+//}
 
 extension Post: Identifiable {
     var id: String? { objectId }
