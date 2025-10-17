@@ -23,14 +23,14 @@ struct CreatePostView: View {
     @State private var location: CLLocation?
     @State private var locationString: String?
     @StateObject private var locationManager = LocationManager()
-    @FocusState private var isCaptionFocused: Bool // FIX: Added focus state
     
     var onPostCreated: (() -> Void)?
     
     var body: some View {
         NavigationView {
-            ScrollView(.vertical, showsIndicators: true) { // FIX: Wrapped in ScrollView for keyboard handling
+            ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 20) {
+                    // Image preview
                     if let image = selectedImage {
                         Image(uiImage: image)
                             .resizable()
@@ -39,6 +39,7 @@ struct CreatePostView: View {
                             .frame(maxWidth: .infinity)
                             .clipped()
                             .cornerRadius(12)
+                            .padding(.horizontal)
                     } else {
                         VStack(spacing: 16) {
                             Image(systemName: "photo.on.rectangle.angled")
@@ -59,8 +60,10 @@ struct CreatePostView: View {
                         .frame(maxWidth: .infinity, minHeight: 300)
                         .background(Color.gray.opacity(0.1))
                         .cornerRadius(12)
+                        .padding(.horizontal)
                     }
                     
+                    // Location display
                     if let locationStr = locationString {
                         HStack {
                             Image(systemName: "location.fill")
@@ -69,30 +72,36 @@ struct CreatePostView: View {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
+                        .padding(.horizontal)
                     }
                     
-                    // FIX: Improved text field with proper focus handling
+                    // Caption input field
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Caption")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                         
-                        if #available(iOS 16.0, *) {
-                            TextField("Write a caption...", text: $caption, axis: .vertical)
-                                .textFieldStyle(.roundedBorder)
-                                .lineLimit(3...6)
-                                .focused($isCaptionFocused)
-                                .submitLabel(.done)
-                                .onSubmit {
-                                    isCaptionFocused = false
-                                }
-                        } else {
-                            // Fallback on earlier versions
+                        // Using TextEditor for better iOS 15 compatibility
+                        ZStack(alignment: .topLeading) {
+                            if caption.isEmpty {
+                                Text("Write a caption...")
+                                    .foregroundColor(Color(.placeholderText))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 12)
+                            }
+                            TextEditor(text: $caption)
+                                .frame(minHeight: 80, maxHeight: 120)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color(.systemGray4), lineWidth: 1)
+                                )
                         }
                     }
+                    .padding(.horizontal)
                     
                     Spacer(minLength: 20)
                     
+                    // Upload button
                     Button(action: uploadPost) {
                         HStack {
                             if isUploading {
@@ -110,8 +119,9 @@ struct CreatePostView: View {
                         .cornerRadius(12)
                     }
                     .disabled(selectedImage == nil || isUploading)
+                    .padding(.horizontal)
                 }
-                .padding()
+                .padding(.vertical)
             }
             .navigationTitle("Create Post")
             .navigationBarTitleDisplayMode(.inline)
@@ -285,7 +295,7 @@ struct CreatePostView: View {
     }
 }
 
-// Camera View
+
 struct CameraView: UIViewControllerRepresentable {
     @Binding var selectedImage: UIImage?
     @Binding var location: CLLocation?
@@ -326,7 +336,7 @@ struct CameraView: UIViewControllerRepresentable {
     }
 }
 
-// Image Picker
+
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var selectedImage: UIImage?
     @Environment(\.dismiss) private var dismiss
@@ -370,7 +380,7 @@ struct ImagePicker: UIViewControllerRepresentable {
     }
 }
 
-// Location Manager
+
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var completion: ((CLLocation?) -> Void)?
