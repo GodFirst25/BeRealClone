@@ -18,7 +18,7 @@ struct MainFeedView: View {
     var body: some View {
         NavigationView {
             VStack {
-                // Header with welcome and logout
+                // Header
                 HStack {
                     VStack(alignment: .leading) {
                         Text("📸 BeReal Clone")
@@ -47,7 +47,6 @@ struct MainFeedView: View {
                     ProgressView("Loading posts...")
                     Spacer()
                 } else if posts.isEmpty {
-                    // Empty state
                     Spacer()
                     VStack(spacing: 16) {
                         Image(systemName: "photo.on.rectangle.angled")
@@ -58,7 +57,7 @@ struct MainFeedView: View {
                             .font(.title2)
                             .foregroundColor(.gray)
                         
-                        Text(currentUser?.lastPostDate == nil ? "Post a photo to see others' post!" : "Be the first to share a moment!")
+                        Text(currentUser?.lastPostDate == nil ? "Post a photo to see others' posts!" : "Be the first to share a moment!")
                             .font(.body)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -74,7 +73,6 @@ struct MainFeedView: View {
                     }
                     Spacer()
                 } else {
-                    // Posts feed
                     FeedView(posts: $posts, currentUser: currentUser)
                 }
             }
@@ -98,25 +96,23 @@ struct MainFeedView: View {
             .sheet(isPresented: $showingCreatePost) {
                 CreatePostView(onPostCreated: {
                     fetchPosts()
-                    loadCurrentUser()// Refresh user to get updated after new post
+                    loadCurrentUser()
                 })
             }
         }
     }
     
-    // Load current user
     func loadCurrentUser() {
         currentUser = AppUser.current
     }
     
-    // Fetch posts from Back4App
     func fetchPosts() {
         isLoading = true
         
         let query = Post.query()
             .include("user")
-            .order([.descending("createdAt")]) // Show newest posts first
-            .limit(10) // Limit to 10 most recent posts as required
+            .order([.descending("createdAt")])
+            .limit(10)
         
         query.find { result in
             DispatchQueue.main.async {
@@ -138,7 +134,6 @@ struct MainFeedView: View {
             return []
         }
         
-        // If user hasn't posted yet, don't show any posts
         guard let userLastPost = currentUser.lastPostDate else {
             return []
         }
@@ -147,7 +142,6 @@ struct MainFeedView: View {
         let now = Date()
         
         return posts.filter { post in
-            // Always show current user's posts
             if post.user?.objectId == currentUser.objectId {
                 return true
             }
@@ -162,7 +156,6 @@ struct MainFeedView: View {
     }
     
     private func logout() {
-        // Remove pending notification before logout
         NotificationManager.shared.cancelAllNotifications()
         
         AppUser.logout { result in
@@ -202,7 +195,6 @@ struct PostCell: View {
     let post: Post
     let currentUser: AppUser?
     
-    // PART 2: Determine if post should be blurred
     private var shouldBlur: Bool {
         guard let currentUser = currentUser, post.user?.objectId != currentUser.objectId else {
             return false
@@ -221,9 +213,7 @@ struct PostCell: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // User info header
             HStack {
-                // Profile picture placeholder
                 Circle()
                     .fill(Color.gray.opacity(0.3))
                     .frame(width: 40, height: 40)
@@ -238,7 +228,6 @@ struct PostCell: View {
                         .font(.headline)
                         .foregroundColor(.primary)
                     
-                    // PART 2: Show time ago
                     if let createdAt = post.createdAt {
                         Text(timeAgoString(from: createdAt))
                             .font(.caption)
@@ -249,7 +238,6 @@ struct PostCell: View {
                 Spacer()
             }
             
-            // PART 2: Location display
             if let location = post.location {
                 HStack {
                     Image(systemName: "location.fill")
@@ -261,7 +249,6 @@ struct PostCell: View {
                 }
             }
             
-            // Post image
             if let imageFile = post.imageFile, let imageURL = imageFile.url {
                 AsyncImage(url: imageURL) { phase in
                     switch phase {
@@ -277,8 +264,7 @@ struct PostCell: View {
                             .frame(maxHeight: 400)
                             .clipped()
                             .cornerRadius(12)
-                            .overlay (
-                                // PART 2: Blur overlay
+                            .overlay(
                                 shouldBlur ?
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(.ultraThinMaterial)
@@ -315,14 +301,12 @@ struct PostCell: View {
                 }
             }
             
-            // Caption
             if let caption = post.caption, !caption.isEmpty {
                 Text(caption)
                     .font(.body)
                     .foregroundColor(.primary)
             }
             
-            // Comment indicator
             HStack {
                 Image(systemName: "bubble.right")
                     .font(.caption)
@@ -337,11 +321,10 @@ struct PostCell: View {
         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
     }
     
-    // Helper function to format time ago
     private func timeAgoString(from date: Date) -> String {
         let calendar = Calendar.current
         let now = Date()
-        let components = calendar.dateComponents([.hour], from: date, to: now)
+        let components = calendar.dateComponents([.hour, .minute], from: date, to: now)
         
         if let hours = components.hour, hours > 0 {
             return "\(hours)h ago"

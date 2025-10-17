@@ -20,7 +20,6 @@ struct CommentsView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Comments list
             if isLoading {
                 Spacer()
                 ProgressView("Loading comments...")
@@ -51,7 +50,6 @@ struct CommentsView: View {
                         .padding()
                     }
                     .onChange(of: comments.count) { _ in
-                        // Scroll to bottom when new comment is added
                         if let lastComment = comments.last {
                             withAnimation {
                                 proxy.scrollTo(lastComment.objectId, anchor: .bottom)
@@ -63,7 +61,6 @@ struct CommentsView: View {
             
             Divider()
             
-            // Comment input
             HStack(spacing: 12) {
                 TextField("Add a comment...", text: $newCommentText)
                     .textFieldStyle(.roundedBorder)
@@ -153,8 +150,6 @@ struct CommentCell: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            
-            //User avatar
             Circle()
                 .fill(Color.blue.opacity(0.3))
                 .frame(width: 32, height: 32)
@@ -164,7 +159,6 @@ struct CommentCell: View {
                         .foregroundColor(.white)
                 )
             
-            // Comment content
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(comment.user?.username ?? "Anonymous")

@@ -8,7 +8,6 @@
 import SwiftUI
 import ParseSwift
 
-
 struct RootView: View {
     @AppStorage("isLoggedIn") private var isLoggedIn = false
     

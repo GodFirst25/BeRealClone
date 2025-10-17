@@ -13,7 +13,6 @@ class NotificationManager {
     
     private init() {}
     
-    // Request notification permissions
     func requestPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
             if granted {
@@ -26,10 +25,7 @@ class NotificationManager {
         }
     }
     
-    // Schedule daily notification reminder
     func scheduleNotification() {
-        
-        // Remove existing notifications first
         cancelAllNotifications()
         
         let content = UNMutableNotificationContent()
@@ -37,8 +33,7 @@ class NotificationManager {
         content.body = "Share what you're doing right now with your friends"
         content.sound = .default
         
-        // Schedule notification every 24 hours
-        // You can adjust this interval as needed
+        // Schedule for 24 hours from now
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 24 * 60 * 60, repeats: true)
         
         let request = UNNotificationRequest(

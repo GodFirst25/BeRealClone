@@ -19,7 +19,6 @@
 		3FDDE1792E831B2C0005545F /* AuthenticationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FDDE1782E831B2C0005545F /* AuthenticationView.swift */; };
 		3FDDE17B2E831BAC0005545F /* MainFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FDDE17A2E831BAC0005545F /* MainFeedView.swift */; };
 		3FDDE17D2E8327AE0005545F /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FDDE17C2E8327AE0005545F /* RootView.swift */; };
-		3FDDE17F2E8330E70005545F /* Post.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FDDE17E2E8330E70005545F /* Post.swift */; };
 		3FDDE1812E83360F0005545F /* PhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FDDE1802E83360F0005545F /* PhotoPicker.swift */; };
 		436B99E22E8CD9AE005DCC28 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 436B99E12E8CD9A1005DCC28 /* NotificationManager.swift */; };
 		436B99E42E8CE3E0005DCC28 /* CommentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 436B99E32E8CE3CF005DCC28 /* CommentsView.swift */; };
@@ -57,7 +56,6 @@
 		3FDDE1782E831B2C0005545F /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
 		3FDDE17A2E831BAC0005545F /* MainFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainFeedView.swift; sourceTree = "<group>"; };
 		3FDDE17C2E8327AE0005545F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
-		3FDDE17E2E8330E70005545F /* Post.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Post.swift; sourceTree = "<group>"; };
 		3FDDE1802E83360F0005545F /* PhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoPicker.swift; sourceTree = "<group>"; };
 		436B99E12E8CD9A1005DCC28 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		436B99E32E8CE3CF005DCC28 /* CommentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsView.swift; sourceTree = "<group>"; };
@@ -119,7 +117,6 @@
 				436B99E32E8CE3CF005DCC28 /* CommentsView.swift */,
 				3FDDE17A2E831BAC0005545F /* MainFeedView.swift */,
 				436B99E12E8CD9A1005DCC28 /* NotificationManager.swift */,
-				3FDDE17E2E8330E70005545F /* Post.swift */,
 				3FDDE1802E83360F0005545F /* PhotoPicker.swift */,
 				3FDDE17C2E8327AE0005545F /* RootView.swift */,
 				3F910F3E2E823D4F00392EE7 /* Assets.xcassets */,
@@ -293,7 +290,6 @@
 				3F910F652E823EA900392EE7 /* AppDelegate.swift in Sources */,
 				436B99E42E8CE3E0005DCC28 /* CommentsView.swift in Sources */,
 				3FDDE1812E83360F0005545F /* PhotoPicker.swift in Sources */,
-				3FDDE17F2E8330E70005545F /* Post.swift in Sources */,
 				3FDDE17B2E831BAC0005545F /* MainFeedView.swift in Sources */,
 				436B99E22E8CD9AE005DCC28 /* NotificationManager.swift in Sources */,
 				3FDDE17D2E8327AE0005545F /* RootView.swift in Sources */,

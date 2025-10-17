@@ -23,95 +23,101 @@ struct CreatePostView: View {
     @State private var location: CLLocation?
     @State private var locationString: String?
     @StateObject private var locationManager = LocationManager()
+    @FocusState private var isCaptionFocused: Bool // FIX: Added focus state
     
     var onPostCreated: (() -> Void)?
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                // Image preview
-                if let image = selectedImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(maxHeight: 300)
-                        .clipped()
+            ScrollView(.vertical, showsIndicators: true) { // FIX: Wrapped in ScrollView for keyboard handling
+                VStack(spacing: 20) {
+                    if let image = selectedImage {
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(height: 300)
+                            .frame(maxWidth: .infinity)
+                            .clipped()
+                            .cornerRadius(12)
+                    } else {
+                        VStack(spacing: 16) {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.system(size: 60))
+                                .foregroundColor(.gray)
+                            
+                            Text("No photo selected")
+                                .foregroundColor(.secondary)
+                            
+                            Button("Select Photo") {
+                                showSourcePicker = true
+                            }
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 300)
+                        .background(Color.gray.opacity(0.1))
                         .cornerRadius(12)
-                        .padding(.horizontal)
-                } else {
-                    // Placeholder
-                    VStack(spacing: 16) {
-                        Image(systemName: "photo.on.rectangle.angled")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray)
-                        
-                        Text("No photo selected")
+                    }
+                    
+                    if let locationStr = locationString {
+                        HStack {
+                            Image(systemName: "location.fill")
+                                .foregroundColor(.blue)
+                            Text(locationStr)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    // FIX: Improved text field with proper focus handling
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Caption")
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                         
-                        Button("Select Photo") {
-                            showSourcePicker = true
+                        if #available(iOS 16.0, *) {
+                            TextField("Write a caption...", text: $caption, axis: .vertical)
+                                .textFieldStyle(.roundedBorder)
+                                .lineLimit(3...6)
+                                .focused($isCaptionFocused)
+                                .submitLabel(.done)
+                                .onSubmit {
+                                    isCaptionFocused = false
+                                }
+                        } else {
+                            // Fallback on earlier versions
                         }
-                        .padding()
-                        .background(Color.blue)
+                    }
+                    
+                    Spacer(minLength: 20)
+                    
+                    Button(action: uploadPost) {
+                        HStack {
+                            if isUploading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.8)
+                            }
+                            Text(isUploading ? "Posting..." : "Upload Post")
+                                .font(.headline)
+                        }
                         .foregroundColor(.white)
-                        .cornerRadius(10)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(selectedImage != nil && !isUploading ? Color.blue : Color.gray)
+                        .cornerRadius(12)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: 300)
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(12)
-                    .padding(.horizontal)
+                    .disabled(selectedImage == nil || isUploading)
                 }
-                
-                // Location display
-                if let locationStr = locationString {
-                    HStack {
-                        Image(systemName: "location.fill")
-                            .foregroundColor(.blue)
-                        Text(locationStr)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.horizontal)
-                }
-                
-                // Caption input
-                TextField("Write a caption...", text: $caption)
-                    .textFieldStyle(.roundedBorder)
-                    .padding(.horizontal)
-                    .frame(height: 40)
-                
-                Spacer()
-                
-                // Post button
-                Button(action: uploadPost) {
-                    HStack {
-                        if isUploading {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(0.8)
-                        }
-                        Text(isUploading ? "Posting..." : "Upload Post")
-                            .font(.headline)
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(selectedImage != nil && !isUploading ? Color.blue : Color.gray)
-                    .cornerRadius(12)
-                }
-                .disabled(selectedImage == nil || isUploading)
-                .padding(.horizontal)
+                .padding()
             }
-            .padding(.vertical)
             .navigationTitle("Create Post")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
+            .navigationBarItems(leading: Button("Cancel") {
+                dismiss()
+            })
             .confirmationDialog("Choose Photo Source", isPresented: $showSourcePicker) {
                 Button("Camera") {
                     showCamera = true
@@ -150,7 +156,6 @@ struct CreatePostView: View {
         }
     }
     
-    // PART 2: Request location after image selection
     private func requestLocation() {
         locationManager.requestLocation { loc in
             self.location = loc
@@ -160,7 +165,6 @@ struct CreatePostView: View {
         }
     }
     
-    // PART 2: Convert coordinates to readable address
     private func reverseGeocode(location: CLLocation) {
         let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(location) { placemarks, error in
@@ -182,26 +186,21 @@ struct CreatePostView: View {
         }
     }
     
-    // Upload post with WORKING file upload solution
     func uploadPost() {
         guard let selectedImage = selectedImage else { return }
         
         isUploading = true
         
-        // Resize image to reduce file size (THIS IS WHAT MADE IT WORK!)
         let resizedImage = resizeImage(image: selectedImage, targetSize: CGSize(width: 800, height: 800))
         
-        // Convert UIImage to Data with lower compression (0.3 quality)
         guard let imageData = resizedImage.jpegData(compressionQuality: 0.3) else {
             showError("Failed to process image")
             return
         }
         
-        // Create Parse file with simple name (UUID + .jpg)
         let fileName = UUID().uuidString + ".jpg"
         let parseFile = ParseFile(name: fileName, data: imageData)
         
-        // First upload the image file
         parseFile.save { result in
             switch result {
             case .success(let savedFile):
@@ -214,7 +213,6 @@ struct CreatePostView: View {
         }
     }
     
-    // Helper function to resize image (THIS IS KEY!)
     private func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
         let size = image.size
         let widthRatio = targetSize.width / size.width
@@ -238,7 +236,6 @@ struct CreatePostView: View {
         post.imageFile = imageFile
         post.user = AppUser.current
         
-        // PART 2: Add location data
         if let location = location {
             post.latitude = location.coordinate.latitude
             post.longitude = location.coordinate.longitude
@@ -252,13 +249,8 @@ struct CreatePostView: View {
                 switch result {
                 case .success(let savedPost):
                     print("✅ Post uploaded successfully: \(savedPost.objectId ?? "")")
-                    
-                    // PART 2: Update user's last post date
                     self.updateUserLastPostDate()
-                    
-                    // PART 2: Schedule notification
                     NotificationManager.shared.scheduleNotification()
-                    
                     self.alertMessage = "Post shared successfully!"
                     self.showingAlert = true
                     
@@ -270,14 +262,13 @@ struct CreatePostView: View {
         }
     }
     
-    // PART 2: Update user's lastPostDate
     private func updateUserLastPostDate() {
         guard var user = AppUser.current else { return }
         
         user.lastPostDate = Date()
         user.save { result in
             switch result {
-            case .success(let updatedUser):
+            case .success(_):
                 print("✅ Updated user lastPostDate")
             case .failure(let error):
                 print("❌ Error updating user: \(error)")
@@ -304,7 +295,7 @@ struct CameraView: UIViewControllerRepresentable {
         let picker = UIImagePickerController()
         picker.delegate = context.coordinator
         picker.sourceType = .camera
-        picker.cameraDevice = .rear // PART 2: Use back camera as required
+        picker.cameraDevice = .rear
         picker.allowsEditing = false
         return picker
     }

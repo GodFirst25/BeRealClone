@@ -17,4 +17,3 @@ struct BeRealCloneApp: App {
         }
     }
 }
-
